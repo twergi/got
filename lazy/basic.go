@@ -1,27 +1,20 @@
 package lazy
 
-import (
-	"context"
-	"sync"
-)
+import "context"
 
 type Lazy[T any] struct {
-	val  T
-	init func(context.Context) T
-	once sync.Once
-}
-
-func NewCtx[T any](init func(context.Context) T) *Lazy[T] {
-	return &Lazy[T]{
-		init: init,
-	}
+	lazy *LazyErrCtx[T]
 }
 
 func New[T any](init func() T) *Lazy[T] {
-	return NewCtx(func(ctx context.Context) T { return init() })
+	return &Lazy[T]{
+		lazy: NewErrCtx(func(ctx context.Context) (T, error) {
+			return init(), nil
+		}),
+	}
 }
 
-func (l *Lazy[T]) Value(ctx context.Context) T {
-	l.once.Do(func() { l.val = l.init(ctx) })
-	return l.val
+func (l *Lazy[T]) Value() T {
+	v, _ := l.lazy.Value(context.Background())
+	return v
 }
