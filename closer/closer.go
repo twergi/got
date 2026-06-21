@@ -5,14 +5,12 @@ import (
 	"sync"
 )
 
-type CloseFunc func()
-
 var (
 	mu      = &sync.Mutex{}
-	closers []CloseFunc
+	closers []func()
 )
 
-func Bind(fn CloseFunc) {
+func Bind(fn func()) {
 	mu.Lock()
 	defer mu.Unlock()
 	closers = append(closers, fn)
